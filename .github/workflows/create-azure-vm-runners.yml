@@ -54,23 +54,20 @@ jobs:
         VM_NAME="actions-runner-$(date +%Y%m%d%H%M%S%N)"
         echo "Will be using $VM_NAME as the VM name"
         echo "vm_name=$VM_NAME" >> $GITHUB_OUTPUT
-    
-    - name: Generate Actions Runner token
-      uses: octokit/request-action@v2.x
-      id: generate-actions-runner-token
-      with:
-        route: POST /repos/{owner}/{repo}/actions/runners/registration-token
-        owner: ${{ env.ACTIONS_RUNNER_ORG }}
-        repo: ${{ env.ACTIONS_RUNNER_REPO }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_API_PAT }}
 
-    - name: Set and mask Actions Runner token for next steps
+    # We can't use the octokit/request-action as we can't properly mask the runner token with it
+    # https://github.com/actions/runner/issues/475
+    - name: Generate Actions Runner token
       run: |
-        # We need to mask the token first before setting it to an env variable
-        echo "::add-mask::${{ fromJson(steps.generate-actions-runner-token.outputs.data).token }}"
-        ACTIONS_RUNNER_TOKEN=${{ fromJson(steps.generate-actions-runner-token.outputs.data).token }}
-        echo ACTIONS_RUNNER_TOKEN=$ACTIONS_RUNNER_TOKEN >> $GITHUB_ENV    
+        ACTIONS_RUNNER_TOKEN=$(curl \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.GH_API_PAT }}"\
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/${{ env.ACTIONS_RUNNER_ORG }}/${{ env.ACTIONS_RUNNER_REPO }}/actions/runners/registration-token \
+          | jq --raw-output .token)
+        echo "::add-mask::$ACTIONS_RUNNER_TOKEN"
+        echo ACTIONS_RUNNER_TOKEN=$ACTIONS_RUNNER_TOKEN >> $GITHUB_ENV
         
     - name: Azure Login
       uses: azure/login@v1
