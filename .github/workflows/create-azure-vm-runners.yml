@@ -82,7 +82,7 @@ jobs:
         echo "::add-mask::$ACTIONS_RUNNER_TOKEN"
         echo ACTIONS_RUNNER_TOKEN=$ACTIONS_RUNNER_TOKEN >> $GITHUB_ENV
 
-        case "${{ inputs.runner-scope }}" in
+        case "${{ inputs.runner_scope }}" in
           "org-level")
             echo ACTIONS_RUNNER_REGISTRATION_URL="https://github.com/${{ env.ACTIONS_RUNNER_ORG }}" >> $GITHUB_ENV
             ;;
@@ -90,7 +90,8 @@ jobs:
             echo ACTIONS_RUNNER_REGISTRATION_URL="https://github.com/${{ env.ACTIONS_RUNNER_ORG }}/${{ env.ACTIONS_RUNNER_REPO }}" >> $GITHUB_ENV
             ;;
           *)
-            die "Unsupported runner scope: ${{ inputs.runner-scope }}"
+            echo "Unsupported runner scope: ${{ inputs.runner_scope }}"
+            exit 1
             ;;
         esac
         
