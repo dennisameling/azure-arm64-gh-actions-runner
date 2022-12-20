@@ -106,3 +106,10 @@ jobs:
         resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
         template: ./azure-arm-template.json
         parameters: ./azure-arm-template-example-parameters.json githubActionsRunnerRegistrationUrl="${{ env.ACTIONS_RUNNER_REGISTRATION_URL }}" githubActionsRunnerToken="${{ env.ACTIONS_RUNNER_TOKEN }}" postDeploymentPsScriptUrl="${{ env.POST_DEPLOYMENT_SCRIPT_URL }}" virtualMachineName=${{ steps.generate-vm-name.outputs.vm_name }} virtualMachineSize=Standard_D8pls_v5 publicIpAddressName1=${{ steps.generate-vm-name.outputs.vm_name }}-ip adminUsername=${{ secrets.AZURE_VM_USERNAME }} adminPassword=${{ secrets.AZURE_VM_PASSWORD }}
+
+    - name: Deallocate the VM for later use
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.43.0
+        inlineScript: |
+          az vm deallocate -n ${{ steps.generate-vm-name.outputs.vm_name }} -g ${{ secrets.AZURE_RESOURCE_GROUP }} --verbose
