@@ -10,6 +10,11 @@ on:
         description: 'Path to the post-deployment script'
         required: false
 
+env:
+  # Repository to set up the Runner in.
+  ACTIONS_RUNNER_ORG: dennisameling
+  ACTIONS_RUNNER_REPO: azure-arm64-gh-actions-runner
+
 jobs:
   create-matrix:
     runs-on: ubuntu-latest
@@ -30,5 +35,39 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJSON(needs.create-matrix.outputs.matrix) }}
+    outputs:
+      vm_name: ${{ steps.generate-vm-name.outputs.vm_name }}
     steps:
-    - run: echo "This is index ${{ matrix.runner_index }}"
+    - name: Generate VM name
+      id: generate-vm-name
+      run: |
+        VM_NAME="actions-runner-$(date +%Y%m%d%H%M%S%N)"
+        echo "Will be using $VM_NAME as the VM name"
+        echo "vm_name=$VM_NAME" >> $GITHUB_OUTPUT
+    
+    - name: Generate Actions Runner token
+      uses: octokit/request-action@v2.x
+      id: generate-actions-runner-token
+      with:
+        route: POST /repos/{owner}/{repo}/actions/runners/registration_token
+        owner: ${{ env.ACTIONS_RUNNER_ORG }}
+        repo: ${{ env.ACTIONS_RUNNER_REPO }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set and mask Actions Runner token for next steps
+      run: |
+        ACTIONS_RUNNER_TOKEN=${{ fromJson(steps.generate-actions-runner-token.outputs.data).token }}
+        echo "::add-mask::$ACTIONS_RUNNER_TOKEN"
+        echo ACTIONS_RUNNER_TOKEN=$ACTIONS_RUNNER_TOKEN >> $GITHUB_ENV    
+        
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - uses: azure/arm-deploy@v1
+      with:
+        resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
+        template: ./azure-arm-template.json
+        parameters: ./azure-arm-template-example-parameters.json githubActionsRunnerRepo="https://github.com/$ACTIONS_RUNNER_ORG/$ACTIONS_RUNNER_REPO" githubActionsRunnerToken="${{ env.ACTIONS_RUNNER_TOKEN }}" postDeploymentPsScriptUrl="https://raw.githubusercontent.com/dennisameling/azure-arm64-templates/main/post-deployment-script.ps1" virtualMachineName=${{ steps.generate-vm-name.outputs.vm_name }} virtualMachineSize=Standard_D8pls_v5 publicIpAddressName1=${{ steps.generate-vm-name.outputs.vm_name }}-ip adminUsername=${{ secrets.AZURE_VM_USERNAME }} adminPassword=${{ secrets.AZURE_VM_PASSWORD }}
