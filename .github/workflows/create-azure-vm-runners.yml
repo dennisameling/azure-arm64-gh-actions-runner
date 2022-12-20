@@ -19,13 +19,9 @@ jobs:
     - name: Create matrix for setting up runners in parallel
       id: create-matrix
       run: |
-        set -x
         AMOUNT_OF_RUNNERS="${{ inputs.amount_of_runners }}"
         echo "Going to create $AMOUNT_OF_RUNNERS runners"
-        for ((i=1; i<=$AMOUNT_OF_RUNNERS; i++)); do
-          INDEX_ARRAY="$(test -n "$INDEX_ARRAY" && echo "$INDEX_ARRAY, ")$i"
-        done
-        MATRIX="matrix={\"runner_index\":[$INDEX_ARRAY]}"
+        MATRIX="matrix={\"runner_index\":[$(seq -s "," 1 $AMOUNT_OF_RUNNERS)]}"
         echo "Going to use this matrix: $MATRIX"
         echo $MATRIX >> $GITHUB_OUTPUT
   create-runners:
