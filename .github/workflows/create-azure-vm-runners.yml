@@ -19,6 +19,7 @@ jobs:
     - name: Create matrix for setting up runners in parallel
       id: create-matrix
       run: |
+        set -x
         AMOUNT_OF_RUNNERS="${{ inputs.amount_of_runners }}"
         echo "Going to create $AMOUNT_OF_RUNNERS runners"
         for ((i=1; i<=$AMOUNT_OF_RUNNERS; i++)); do INDEX_ARRAY="$INDEX_ARRAY$(test $i != 1 && echo ", ")$i"; done
