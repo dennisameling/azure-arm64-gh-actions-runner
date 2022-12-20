@@ -67,14 +67,18 @@ jobs:
 
     - name: Set and mask Actions Runner token for next steps
       run: |
+        # We need to mask the token first before setting it to an env variable
+        echo "::add-mask::${{ fromJson(steps.generate-actions-runner-token.outputs.data).token }}"
         ACTIONS_RUNNER_TOKEN=${{ fromJson(steps.generate-actions-runner-token.outputs.data).token }}
-        echo "::add-mask::$ACTIONS_RUNNER_TOKEN"
         echo ACTIONS_RUNNER_TOKEN=$ACTIONS_RUNNER_TOKEN >> $GITHUB_ENV    
         
     - name: Azure Login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    # Checkout the repo so that we can access the template files
+    - uses: actions/checkout@v3
 
     - uses: azure/arm-deploy@v1
       with:
