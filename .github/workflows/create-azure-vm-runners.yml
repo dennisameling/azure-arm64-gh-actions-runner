@@ -6,14 +6,26 @@ on:
       amount_of_runners:
         description: 'Amount of runners to set up'
         required: true
-      post_deployment_script:
-        description: 'Path to the post-deployment script'
+      runner_scope:
+        type: choice
+        required: true
+        description: Scope of the runner. On personal accounts, only "repo-level" works
+        options:
+        - org-level
+        - repo-level
+      runner_org:
+        type: string
+        required: true
+        description: Organization or personal account to deploy the runner to
+      runner_repo:
+        type: string
         required: false
+        description: Repo to deploy the runner to. Only needed if runner_scope is set to "repo-level"
 
 env:
-  # Repository to set up the Runner in.
-  ACTIONS_RUNNER_ORG: dennisameling
-  ACTIONS_RUNNER_REPO: azure-arm64-gh-actions-runner
+  ACTIONS_RUNNER_ORG: "${{ github.event.inputs.runner_org }}"
+  ACTIONS_RUNNER_REPO: "${{ github.event.inputs.runner_repo }}"
+  POST_DEPLOYMENT_SCRIPT_URL: https://raw.githubusercontent.com/dennisameling/azure-arm64-gh-actions-runner/main/post-deployment-script.ps1
 
 # The following secrets are required for this workflow to run:
 # GH_API_PAT - PAT to create a runner registration token using GitHub's API
@@ -57,7 +69,7 @@ jobs:
 
     # We can't use the octokit/request-action as we can't properly mask the runner token with it
     # https://github.com/actions/runner/issues/475
-    - name: Generate Actions Runner token
+    - name: Generate Actions Runner token and registration URL
       run: |
         ACTIONS_RUNNER_TOKEN=$(curl \
           -X POST \
@@ -68,6 +80,18 @@ jobs:
           | jq --raw-output .token)
         echo "::add-mask::$ACTIONS_RUNNER_TOKEN"
         echo ACTIONS_RUNNER_TOKEN=$ACTIONS_RUNNER_TOKEN >> $GITHUB_ENV
+
+        case "${{ inputs.runner-scope }}" in
+          "org-level")
+            echo ACTIONS_RUNNER_REGISTRATION_URL="https://github.com/${{ env.ACTIONS_RUNNER_ORG }}" >> $GITHUB_ENV
+            ;;
+          "repo-level")
+            echo ACTIONS_RUNNER_REGISTRATION_URL="https://github.com/${{ env.ACTIONS_RUNNER_ORG }}/${{ env.ACTIONS_RUNNER_REPO }}" >> $GITHUB_ENV
+            ;;
+          *)
+            die "Unsupported runner scope: ${{ inputs.runner-scope }}"
+            ;;
+        esac
         
     - name: Azure Login
       uses: azure/login@v1
@@ -81,4 +105,4 @@ jobs:
       with:
         resourceGroupName: ${{ secrets.AZURE_RESOURCE_GROUP }}
         template: ./azure-arm-template.json
-        parameters: ./azure-arm-template-example-parameters.json githubActionsRunnerRepo="https://github.com/$ACTIONS_RUNNER_ORG/$ACTIONS_RUNNER_REPO" githubActionsRunnerToken="${{ env.ACTIONS_RUNNER_TOKEN }}" postDeploymentPsScriptUrl="https://raw.githubusercontent.com/dennisameling/azure-arm64-templates/main/post-deployment-script.ps1" virtualMachineName=${{ steps.generate-vm-name.outputs.vm_name }} virtualMachineSize=Standard_D8pls_v5 publicIpAddressName1=${{ steps.generate-vm-name.outputs.vm_name }}-ip adminUsername=${{ secrets.AZURE_VM_USERNAME }} adminPassword=${{ secrets.AZURE_VM_PASSWORD }}
+        parameters: ./azure-arm-template-example-parameters.json githubActionsRunnerRegistrationUrl="${{ env.ACTIONS_RUNNER_REGISTRATION_URL }}" githubActionsRunnerToken="${{ env.ACTIONS_RUNNER_TOKEN }}" postDeploymentPsScriptUrl="${{ env.POST_DEPLOYMENT_SCRIPT_URL }}" virtualMachineName=${{ steps.generate-vm-name.outputs.vm_name }} virtualMachineSize=Standard_D8pls_v5 publicIpAddressName1=${{ steps.generate-vm-name.outputs.vm_name }}-ip adminUsername=${{ secrets.AZURE_VM_USERNAME }} adminPassword=${{ secrets.AZURE_VM_PASSWORD }}

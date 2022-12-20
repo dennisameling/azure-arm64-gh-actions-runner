@@ -2,7 +2,7 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "githubActionsRunnerRepo": {
+        "githubActionsRunnerRegistrationUrl": {
             "type": "string",
             "minLength": 6,
             "metadata": {
@@ -258,7 +258,7 @@
                         "value": "[parameters('location')]"
                     },
                     "arguments": {
-                        "value": "[concat('-GitHubActionsRunnerToken ', parameters('githubActionsRunnerToken'), ' -GitHubActionsRunnerRepo ', parameters('githubActionsRunnerRepo'))]"
+                        "value": "[concat('-GitHubActionsRunnerToken ', parameters('githubActionsRunnerToken'), ' -GithubActionsRunnerRegistrationUrl ', parameters('githubActionsRunnerRegistrationUrl'), ' -GithubActionsRunnerName ', parameters('virtualMachineName'))]"
                     }
                 }
             },
