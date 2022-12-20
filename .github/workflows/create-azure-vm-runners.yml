@@ -1,0 +1,35 @@
+name: create-azure-vm-runners
+
+on:
+  workflow_dispatch:
+    inputs:
+      amount_of_runners:
+        description: 'Amount of runners to set up'
+        required: true
+      post_deployment_script:
+        description: 'Path to the post-deployment script'
+        required: false
+
+jobs:
+  create-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
+    steps:
+    - name: Create matrix for setting up runners in parallel
+      id: create-matrix
+      run: |
+        AMOUNT_OF_RUNNERS="${{ inputs.amount_of_runners }}"
+        echo "Going to create $AMOUNT_OF_RUNNERS runners"
+        for ((i=1; i<=$AMOUNT_OF_RUNNERS; i++)); do INDEX_ARRAY="$INDEX_ARRAY$(test $i != 1 && echo ", ")$i"; done
+        MATRIX="matrix={\"runner_index\":[$INDEX_ARRAY]}"
+        echo "Going to use this matrix: $MATRIX"
+        echo $MATRIX >> $GITHUB_OUTPUT
+  create-runners:
+    name: create-runner-${{ matrix.runner_index }}
+    needs: create-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJSON(needs.create-matrix.outputs.matrix) }}
+    steps:
+    - run: echo "This is index ${{ matrix.runner_index }}"
