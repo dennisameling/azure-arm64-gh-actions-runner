@@ -49,7 +49,7 @@ jobs:
       uses: octokit/request-action@v2.x
       id: generate-actions-runner-token
       with:
-        route: POST /repos/{owner}/{repo}/actions/runners/registration_token
+        route: POST /repos/{owner}/{repo}/actions/runners/registration-token
         owner: ${{ env.ACTIONS_RUNNER_ORG }}
         repo: ${{ env.ACTIONS_RUNNER_REPO }}
       env:
