@@ -23,6 +23,13 @@
                 "description": "URL to the post-deployment PowerShell script. E.g. https://raw.githubusercontent.com/dennisameling/azure-arm64-templates/main/post-deployment-script.ps1"
             }
         },
+        "computerName": {
+            "type": "string",
+            "maxLength": 15,
+            "metadata": {
+                "description": "Windows Computer Name. Can be maximum 15 characters."
+            }
+        },
         "location": {
             "type": "string"
         },
