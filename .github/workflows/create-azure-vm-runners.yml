@@ -16,7 +16,7 @@ env:
   ACTIONS_RUNNER_REPO: azure-arm64-gh-actions-runner
 
 # The following secrets are required for this workflow to run:
-# GITHUB_API_PAT - PAT to create a runner registration token
+# GH_API_PAT - PAT to create a runner registration token using GitHub's API
 # AZURE_CREDENTIALS - Credentials for the Azure CLI. It's recommended to set up a resource
 #                     group specifically for self-hosted Actions Runners.
 #   az ad sp create-for-rbac --name "{YOUR_DESCRIPTIVE_NAME_HERE}" --role contributor \
@@ -63,7 +63,7 @@ jobs:
         owner: ${{ env.ACTIONS_RUNNER_ORG }}
         repo: ${{ env.ACTIONS_RUNNER_REPO }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_API_PAT }}
+        GITHUB_TOKEN: ${{ secrets.GH_API_PAT }}
 
     - name: Set and mask Actions Runner token for next steps
       run: |
