@@ -1,0 +1,10 @@
+name: create-azure-vm-runners
+
+on: [push, pull_request]
+
+jobs:
+  test-job:
+    runs-on: [Windows, ARM64]
+    steps:
+      - shell: bash
+        run: echo "Testing. This should trigger removal of the service (ephemeral)"
