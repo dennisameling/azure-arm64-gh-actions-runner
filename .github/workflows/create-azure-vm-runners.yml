@@ -22,7 +22,9 @@ jobs:
         set -x
         AMOUNT_OF_RUNNERS="${{ inputs.amount_of_runners }}"
         echo "Going to create $AMOUNT_OF_RUNNERS runners"
-        for ((i=1; i<=$AMOUNT_OF_RUNNERS; i++)); do INDEX_ARRAY="$INDEX_ARRAY$(test $i != 1 && echo ", ")$i"; done
+        for ((i=1; i<=$AMOUNT_OF_RUNNERS; i++)); do
+          INDEX_ARRAY="$INDEX_ARRAY$(test $i != 1 && echo ", ")$i"
+        done
         MATRIX="matrix={\"runner_index\":[$INDEX_ARRAY]}"
         echo "Going to use this matrix: $MATRIX"
         echo $MATRIX >> $GITHUB_OUTPUT
