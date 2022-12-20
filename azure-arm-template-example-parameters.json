@@ -78,6 +78,9 @@
         },
         "zone": {
             "value": "1"
+        },
+        "computerName": {
+            "value": "actions-runner"
         }
     }
 }
